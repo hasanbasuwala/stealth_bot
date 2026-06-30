@@ -1,5 +1,12 @@
 import asyncio
 import sys
+
+# 1. CREATE EVENT LOOP BEFORE IMPORTING PYROGRAM (Fixes the RuntimeError)
+try:
+    asyncio.get_event_loop()
+except RuntimeError:
+    asyncio.set_event_loop(asyncio.new_event_loop())
+
 from pyrogram import Client
 
 from core import state
