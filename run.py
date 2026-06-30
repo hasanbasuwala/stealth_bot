@@ -1,13 +1,13 @@
 import asyncio
 import sys
 
-# 1. CREATE EVENT LOOP BEFORE IMPORTING PYROGRAM (Fixes the RuntimeError)
+# 1. CREATE EVENT LOOP BEFORE IMPORTING PYROGRAM
 try:
     asyncio.get_event_loop()
 except RuntimeError:
     asyncio.set_event_loop(asyncio.new_event_loop())
 
-from pyrogram import Client
+from pyrogram import Client, idle
 
 from core import state
 from core.handlers import setup_all_handlers
@@ -20,10 +20,14 @@ async def main():
     setup_all_handlers(app)
 
     log.info("Test Boot: Connecting to Telegram...")
-    async with app:
-        log.info("Bot is online! Send /dashboard on Telegram to test the UI.")
-        while True:
-            await asyncio.sleep(3600)
+    await app.start()
+    
+    # This will reveal if your config.py is loading the ID correctly!
+    log.info(f"Bot is online! OWNER_ID is configured as: {state.OWNER_ID}")
+    log.info("Send /dashboard on Telegram to test the UI.")
+    
+    await idle()
+    await app.stop()
 
 if __name__ == "__main__":
     try:
