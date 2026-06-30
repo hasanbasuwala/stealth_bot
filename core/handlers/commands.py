@@ -19,13 +19,17 @@ def setup_commands(app: Client):
         )
         state._dashboard_msg_id = m.id
 
-    # ── THE NEW UPDATE COMMAND ──
+    # ── THE WATCHDOG UPDATE COMMAND ──
     @app.on_message(filters.command("update") & filters.user(state.OWNER_ID))
     async def update_bot(_, msg: Message):
         log.info("Update command received. Triggering watchdog.sh...")
         
         await msg.reply("🔄 **Deploying Updates...**\nPulling from GitHub and rebooting. I will be back in ~5 seconds!")
         
-        # Launch the bash script as a completely separate, detached process
-        # so that when it kills Python, the bash script survives to restart it.
-        subprocess.Popen(["bash", "watchdog.sh"], start_new_session=True)
+        # Launch the watchdog detached so it survives the Python shutdown
+        subprocess.Popen(
+            ["nohup", "bash", "watchdog.sh"], 
+            stdout=subprocess.DEVNULL, 
+            stderr=subprocess.DEVNULL, 
+            start_new_session=True
+        )
