@@ -32,7 +32,8 @@ def download_waterfall_fallback(target_url: str, job_id: str, referer: str, cook
         "http_headers": headers,
         "progress_hooks": [prog_hook],
         "quiet": True, "no_warnings": True, "noplaylist": True, "continuedl": True, "nocheckcertificate": True,
-        "impersonate": ImpersonateTarget(client="chrome"), "compat_opts": {"allow-unsafe-ext"},
+        # Updated target string below to a supported curl_cffi target
+        "impersonate": ImpersonateTarget(client="chrome110"), "compat_opts": {"allow-unsafe-ext"},
     }
     with yt_dlp.YoutubeDL(opts) as ydl:
         info  = ydl.extract_info(target_url, download=True)
