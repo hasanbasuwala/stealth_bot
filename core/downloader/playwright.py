@@ -6,6 +6,12 @@ async def run_custom_workflow(url: str, job_id: str) -> tuple[str, str, str]:
     job = state.Job(job_id)
     referer, cookie_str = url, ""
 
+    # ── SMART BYPASS ──
+    # If the user pasted a raw media link, don't waste time booting a browser!
+    if ".m3u8" in url.lower() or ".mp4" in url.lower():
+        job.write_log("Direct media link detected. Skipping parsers.")
+        return url, referer, cookie_str
+
     job.write_log("Firing Native HTTP Scraping Framework...")
     try:
         client = primp.Client(impersonate="chrome_120")
