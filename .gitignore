@@ -1,0 +1,16 @@
+# Configuration / Secrets
+config.py
+
+# Media and Node Bloat
+*.mp4
+node_modules/
+
+# Download Caches & Logs
+SysCache/
+Bot_Download/
+*.log
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
