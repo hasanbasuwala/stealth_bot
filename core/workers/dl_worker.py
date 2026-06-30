@@ -24,6 +24,7 @@ async def dl_worker(app: Client):
             quality = meta.get("quality", "best")
 
             existing = [f for f in job.dl_dir.glob("*") if f.is_file() and f.stat().st_size > 1024 * 1024]
+            
             if not existing:
                 if "magnet:?" in url:
                     await download_aria2c(url, job_id, job)
@@ -39,8 +40,24 @@ async def dl_worker(app: Client):
                     state._live_progress[job_id]["stage"] = "Downloading"
 
                     clean_path = urllib.parse.urlparse(actual_url).path.lower()
+                    
+                    # ── SMART ROUTING WITH FALLBACK ──
                     if clean_path.endswith(".m3u8") or "m3u8" in actual_url:
-                        await download_mediago(actual_url, job_id, job)
+                        try:
+                            # Attempt Primary Engine (MediaGo)
+                            await download_mediago(actual_url, job_id, job)
+                        except Exception as e:
+                            # If it's a kill switch, respect it and abort completely
+                            if "KILL_SWITCH" in str(e):
+                                raise
+                            
+                            # Log the failure and reroute to Fallback Engine (YT-DLP)
+                            job.write_log(f"MediaGo failed ({e}). Rerouting to YT-DLP fallback...")
+                            if job_id in state._live_progress:
+                                state._live_progress[job_id]["status"] = "MediaGo failed, rerouting..."
+                            
+                            await asyncio.to_thread(download_waterfall_fallback, actual_url, job_id, referer, cookie_str, quality)
+
                     elif clean_path.endswith(".mp4") or "direct-mp4" in actual_url:
                         await download_aria2c(actual_url, job_id, job)
                     else:
@@ -56,7 +73,8 @@ async def dl_worker(app: Client):
             if "KILL_SWITCH" not in str(e):
                 retry += 1
                 job.write_log(f"Download Strike {retry}: {e}")
-                if retry >= state.MAX_RETRIES: await handle_pipeline_failure(app, job, str(e))
+                if retry >= state.MAX_RETRIES: 
+                    await handle_pipeline_failure(app, job, str(e))
                 else:
                     job.update_state(state.Stage.QUEUED, retries=retry)
                     await state.dl_queue.put(job_id)
