@@ -29,3 +29,6 @@ async def handle_pipeline_failure(app: Client, job: state.Job, exception_str: st
                 InlineKeyboardButton("🗑 Wipe", callback_data=f"kill|{job.job_id}"),
             ]]),
         )
+        
+    # ── FIX: Erase the job from the live dashboard active list ──
+    state._live_progress.pop(job.job_id, None)
