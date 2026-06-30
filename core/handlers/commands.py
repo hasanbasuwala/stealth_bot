@@ -6,9 +6,8 @@ from core.loggers.engine_log import get_logger
 log = get_logger("handlers")
 
 def setup_commands(app: Client):
-    
-    # Temporarily removed the OWNER_ID filter to test permissions!
-    @app.on_message(filters.command(["start", "dashboard"]))
+    # Security lock restored: & filters.user(state.OWNER_ID)
+    @app.on_message(filters.command(["start", "dashboard"]) & filters.user(state.OWNER_ID))
     async def init_dashboard(_, msg: Message):
         log.info(f"Dashboard requested by User ID: {msg.from_user.id}")
         
