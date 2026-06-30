@@ -1,3 +1,4 @@
+import subprocess
 from pyrogram import Client, filters
 from pyrogram.types import Message
 from core import state, ui
@@ -6,7 +7,7 @@ from core.loggers.engine_log import get_logger
 log = get_logger("handlers")
 
 def setup_commands(app: Client):
-    # Security lock restored: & filters.user(state.OWNER_ID)
+    
     @app.on_message(filters.command(["start", "dashboard"]) & filters.user(state.OWNER_ID))
     async def init_dashboard(_, msg: Message):
         log.info(f"Dashboard requested by User ID: {msg.from_user.id}")
@@ -17,3 +18,14 @@ def setup_commands(app: Client):
             reply_markup=ui._build_dashboard_kb(state._job_list_page),
         )
         state._dashboard_msg_id = m.id
+
+    # ── THE NEW UPDATE COMMAND ──
+    @app.on_message(filters.command("update") & filters.user(state.OWNER_ID))
+    async def update_bot(_, msg: Message):
+        log.info("Update command received. Triggering watchdog.sh...")
+        
+        await msg.reply("🔄 **Deploying Updates...**\nPulling from GitHub and rebooting. I will be back in ~5 seconds!")
+        
+        # Launch the bash script as a completely separate, detached process
+        # so that when it kills Python, the bash script survives to restart it.
+        subprocess.Popen(["bash", "watchdog.sh"], start_new_session=True)
