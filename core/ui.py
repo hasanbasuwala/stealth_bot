@@ -64,7 +64,10 @@ def _build_dashboard_text(page: int) -> str:
         if (folder / "state.json").exists():
             try: stage = json.loads((folder / "state.json").read_text()).get("stage", "?")
             except Exception: pass
-        job_lines += f"  • `{title}`  _{stage}_\n"
+        
+        # ── FIX: Calculate storage per exact job folder ──
+        mb = sum(f.stat().st_size for f in folder.rglob("*") if f.is_file()) / (1024 ** 2)
+        job_lines += f"  • `{title}`  _{stage}_  `({mb:.1f} MB)`\n"
     
     if not job_lines: job_lines = "  _No jobs on disk_\n"
 
@@ -75,7 +78,7 @@ def _build_dashboard_text(page: int) -> str:
         f"**Queued**\n{queue_lines}\n"
         f"**All Jobs** (page {safe_page + 1}/{total_pages})\n{job_lines}\n"
         f"**Last Completed**\n  `{state._last_completed[:40]}`\n\n"
-        f"**Storage** `{storage:.1f} MB`  in  `{total_jobs}` job folder(s)"
+        f"**Total Storage:** `{storage:.1f} MB`  in  `{total_jobs}` job folder(s)"
     )
 
 def _build_dashboard_kb(page: int) -> InlineKeyboardMarkup:
