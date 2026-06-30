@@ -18,7 +18,6 @@ def download_waterfall_fallback(target_url: str, job_id: str, referer: str, cook
         if job.check_cancelled(): raise ValueError("KILL_SWITCH_ENGAGED")
         if d.get("status") == "downloading" and job_id in state._live_progress:
             try:
-                # ── FIX: Bulletproof percentage extraction & calculation ──
                 if "_percent_str" in d:
                     clean = re.sub(r"\x1b[^m]*m", "", d["_percent_str"])
                     clean = clean.replace("%", "").replace("~", "").strip()
@@ -40,7 +39,8 @@ def download_waterfall_fallback(target_url: str, job_id: str, referer: str, cook
         "http_headers": headers,
         "progress_hooks": [prog_hook],
         "quiet": True, "no_warnings": True, "noplaylist": True, "continuedl": True, "nocheckcertificate": True,
-        "impersonate": ImpersonateTarget(client="chrome110"), "compat_opts": {"allow-unsafe-ext"},
+        # Using chrome100 as the safest fallback
+        "impersonate": ImpersonateTarget(client="chrome100"), "compat_opts": {"allow-unsafe-ext"},
     }
     with yt_dlp.YoutubeDL(opts) as ydl:
         info  = ydl.extract_info(target_url, download=True)
